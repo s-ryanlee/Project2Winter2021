@@ -1,3 +1,6 @@
 cache.json
 __pycache__
 secrets.py
+work.py
+nat_parks_html.html
+nat_parks_pretty.html
