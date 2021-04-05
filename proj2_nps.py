@@ -1,9 +1,9 @@
-#################################
-##### Name:
-##### Uniqname:
+################################
+##### Name: Samantha Ryan-Lee
+##### Uniqname: sryanlee
 #################################
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import requests
 import json
 import secrets # file that contains your API key
@@ -46,8 +46,19 @@ def build_state_url_dict():
         key is a state name and value is the url
         e.g. {'michigan':'https://www.nps.gov/state/mi/index.htm', ...}
     '''
-    pass
-       
+
+    nat_parks_html = requests.get('https://www.nps.gov/index.htm')
+    soup = bs(nat_parks_html.content, 'html_parser')
+
+    all_a = soup.find_all('a')
+
+    state_urls = []
+    for a in all_a:
+        if 'state' in a['href']:
+            state_url = {a.text.strip().lower(): a['href']}
+            state_urls.append(state_url)
+
+    return state_urls
 
 def get_site_instance(site_url):
     '''Make an instances from a national site URL.
