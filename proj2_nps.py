@@ -52,10 +52,11 @@ def build_state_url_dict():
 
     all_a = soup.find_all('a')
 
+    homepage = 'https://www.nps.gov'
     state_urls = []
     for a in all_a:
         if 'state' in a['href']:
-            state_url = {a.text.strip().lower(): a['href']}
+            state_url = {a.text.strip().lower(): homepage + a['href']}
             state_urls.append(state_url)
 
     return state_urls
