@@ -30,7 +30,15 @@ class NationalSite:
     phone: string
         the phone of a national site (e.g. '(616) 319-7906', '307-344-7381')
     '''
-    pass
+     def __init__(self, category, name, address, zipcode, phone):
+        self.category = category
+        self.name = name
+        self.address = address
+        self.zipcode = zipcode
+        self.phone = phone
+
+    def info(self):
+        return f"{self.name} ({self.category}): {self.address} {self.zipcode}"
 
 
 def build_state_url_dict():
@@ -74,7 +82,32 @@ def get_site_instance(site_url):
     instance
         a national site instance
     '''
-    pass
+    site_html = requests.get(site_url)
+    site_bs = bs(site_html.content, 'html.parser')
+
+    title = site_bs.find('title')
+    name = title.text.strip(')').split('(')[0]
+    category = title.text.strip(')').split('(')[1]
+
+    all_span = isle_royale_bs.find_all('span')
+
+    site_attrs = []
+    for span in all_span:
+        if span.get('itemprop') is not None:
+            if 'addressLocality' in span['itemprop']:
+                site_attrs.append({'city': span.text})
+            elif 'addressRegion' in span['itemprop']:
+                site_attrs.append({'state': span.text})
+            elif 'postalCode' in span['itemprop']:
+                site_attrs.append({'postal_code': span.text.strip()})
+            elif 'telephone' in span['itemprop']:
+                site_attrs.append({'telephone': span.text.strip('\n')})
+
+    address = f"{site_attrs[0]['city']}, {site_attrs[1]['state']}"
+    zipcode = site_attrs[2]['postal_code']
+    phone = site_attrs[3]['telephone']
+
+    return NationalSite(category, name, address, zipcode, phone)
 
 
 def get_sites_for_state(state_url):
