@@ -10,6 +10,8 @@ import secrets # file that contains your API key
 
 BASE_URL = 'https://www.nps.gov'
 END_URL = 'index.htm'
+CACHE_FILE_NAME = 'cache.json'
+CACHE_DICT = {}
 
 class NationalSite:
     '''a national site
@@ -176,7 +178,20 @@ def get_nearby_places(site_object):
     '''
     pass
 
+
+
 def print_state_sites(site_instances):
+    '''Prints numbered national site names, categories, and address details
+
+    Parameters
+    ----------
+    site_instances: list
+        a list of National Site instances
+
+    Returns
+    -------
+    None
+    '''
     i = 1
     for instance in site_instances:
         string = f'[{i}] {instance.info()}\n'
@@ -184,7 +199,81 @@ def print_state_sites(site_instances):
         i += 1
 
 
+def load_cache():
+    '''Tries to read and load cache file into a local dictionary.
+    If unsuccessful, local dictionary remains empty.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    chache: dictionary
+        a dictionary containing the cache file
+    '''
+    try:
+        cache_file = open(CACHE_FILE_NAME, 'r')
+        cache_file_contents = cache_file.read()
+        cache = json.loads(cache_file_contents)
+        cache_file.close()
+    except:
+        cache = {}
+    return cache
+
+
+def save_cache(cache):
+    '''Adds new information to the saved cache file.
+
+    Parameters
+    ----------
+    cache : dictionary
+        local cache dictionary
+
+    Returns
+    -------
+    None
+    '''
+    cache_file = open(CACHE_FILE_NAME, 'w')
+    contents_to_write = json.dumps(cache)
+    cache_file.write(contents_to_write)
+    cache_file.close()
+
+
+def make_url_request_using_cache(url, cache):
+    '''Makes a request to data saved in the local cache or directly from the webpage,
+    depending on if url already exists within the cache.
+
+    Parameters
+    ----------
+    url: string
+        url for the requested webpage
+    cache: dictionary
+        local cache dictionary
+
+    Returns
+    -------
+    cache[url]: string
+        html code saved in the cache associated with the given url
+    '''
+    if (url in cache.keys()): # the url is our unique key
+        print("Using cache")
+        return cache[url]
+    else:
+        print("Fetching")
+        time.sleep(1)
+        response = requests.get(url, headers=headers)
+        cache[url] = response.text
+        save_cache(cache)
+        return cache[url]
+
+
+
 if __name__ == "__main__":
+
+    # Load the cache, save in global variable
+    CACHE_DICT = load_cache()
+
     # build url dict
     state_url_dict = build_state_url_dict()
     #print(state_url_dict['michigan'])
@@ -196,7 +285,6 @@ if __name__ == "__main__":
         state_input = state_input.lower().strip()
         #print(state_input)
 
-    # get NationalSites
+    # get NationalSites and display
     state_sites = get_sites_for_state(state_url_dict[state_input])
-    #print(state_sites)
     print_state_sites(state_sites)
