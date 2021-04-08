@@ -32,7 +32,7 @@ class NationalSite:
     phone: string
         the phone of a national site (e.g. '(616) 319-7906', '307-344-7381')
     '''
-     def __init__(self, category, name, address, zipcode, phone):
+    def __init__(self, category, name, address, zipcode, phone):
         self.category = category
         self.name = name
         self.address = address
@@ -41,6 +41,7 @@ class NationalSite:
 
     def info(self):
         return f"{self.name} ({self.category}): {self.address} {self.zipcode}"
+
 
 
 def build_state_url_dict():
@@ -58,18 +59,19 @@ def build_state_url_dict():
     '''
 
     nat_parks_html = requests.get('https://www.nps.gov/index.htm')
-    soup = bs(nat_parks_html.content, 'html_parser')
+    soup = bs(nat_parks_html.content, 'html.parser')
 
     all_a = soup.find_all('a')
 
     homepage = 'https://www.nps.gov'
-    state_urls = []
+    state_urls = {}
     for a in all_a:
         if 'state' in a['href']:
-            state_url = {a.text.strip().lower(): homepage + a['href']}
-            state_urls.append(state_url)
+            state_urls[a.text.strip().lower()] = homepage + a['href']
 
     return state_urls
+
+
 
 def get_site_instance(site_url):
     '''Make an instances from a national site URL.
@@ -161,19 +163,29 @@ def get_sites_for_state(state_url):
 
 def get_nearby_places(site_object):
     '''Obtain API data from MapQuest API.
-    
+
     Parameters
     ----------
     site_object: object
         an instance of a national site
-    
+
     Returns
     -------
     dict
         a converted API return from MapQuest API
     '''
     pass
-    
+
+
 
 if __name__ == "__main__":
-    pass
+    # build url dict
+    state_url_dict = build_state_url_dict()
+    print(state_url_dict['michigan'])
+
+    # get user input, normalize, and validate
+    state_input = ''
+    while state_input not in state_url_dict.keys():
+        state_input = input('Please input the name of a US state:\n')
+        state_input = state_input.lower().strip()
+        print(state_input)
