@@ -146,9 +146,9 @@ def get_sites_for_state(state_url):
     state_site_lis = state_sites_parent.find_all('li')
 
     site_instances = []
-    for state_site_li in nat_site_lis:
+    for state_site_li in state_site_lis:
         site_div = state_site_li.find('div', class_='col-md-9 col-sm-9 col-xs-12 table-cell list_left')
-        if site_div is not NOne:
+        if site_div is not None:
             site_link_tag = site_div.find('a')
             if site_link_tag is not None:
                 site_details_path = site_link_tag['href']
@@ -176,16 +176,27 @@ def get_nearby_places(site_object):
     '''
     pass
 
+def print_state_sites(site_instances):
+    i = 1
+    for instance in site_instances:
+        string = f'[{i}] {instance.info()}\n'
+        print(string)
+        i += 1
 
 
 if __name__ == "__main__":
     # build url dict
     state_url_dict = build_state_url_dict()
-    print(state_url_dict['michigan'])
+    #print(state_url_dict['michigan'])
 
     # get user input, normalize, and validate
     state_input = ''
     while state_input not in state_url_dict.keys():
         state_input = input('Please input the name of a US state:\n')
         state_input = state_input.lower().strip()
-        print(state_input)
+        #print(state_input)
+
+    # get NationalSites
+    state_sites = get_sites_for_state(state_url_dict[state_input])
+    #print(state_sites)
+    print_state_sites(state_sites)
