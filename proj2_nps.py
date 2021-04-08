@@ -8,6 +8,8 @@ import requests
 import json
 import secrets # file that contains your API key
 
+BASE_URL = 'https://www.nps.gov'
+END_URL = 'index.htm'
 
 class NationalSite:
     '''a national site
@@ -135,7 +137,22 @@ def get_sites_for_state(state_url):
     list
         a list of national site instances
     '''
-    pass
+    state_home_html = requests.get(state_url)
+    state_home_bs = bs(state_home_html.text, 'html.parser')
+
+    state_sites_parent = state_home_bs.find('div', id='parkListResultsArea')
+    state_site_lis = state_sites_parent.find_all('li')
+
+    for state_site_li in nat_site_lis:
+        site_div = state_site_li.find('div', class_='col-md-9 col-sm-9 col-xs-12 table-cell list_left')
+        if site_div is not NOne:
+            site_link_tag = site_div.find('a')
+            if site_link_tag is not None:
+                site_details_path = site_link_tag['href']
+                site_details_url = BASE_URL + site_details_path + END_URL
+                site_instance = get_site_instance(site_details_url)
+                #print(site_instance.info())
+
 
 
 def get_nearby_places(site_object):
