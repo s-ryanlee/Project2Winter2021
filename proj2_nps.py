@@ -83,17 +83,25 @@ def get_site_instance(site_url):
         a national site instance
     '''
     site_html = requests.get(site_url)
-    site_bs = bs(site_html.content, 'html.parser')
-
-    title = site_bs.find('title')
-    name = title.text.strip(')').split('(')[0]
-    category = title.text.strip(')').split('(')[1]
-
-    all_span = isle_royale_bs.find_all('span')
+    site_bs = bs(site_html.text, 'html.parser')
 
     site_attrs = []
-    for span in all_span:
+    title_parent = site_bs.find('div', class_='Hero-titleContainer clearfix')
+
+    name_a = title_parent.find('a', class_='Hero-title')
+    name = name_a.text.strip()
+    site_attrs.append({'name': name})
+
+    category = title_parent.find('span', class_='Hero-designation').text.strip()
+    site_attrs.append({'category': category})
+
+    footer_parent = site_bs.find('div', class_='ParkFooter-contact')
+    footer_spans = footer_parent.find_all('span')
+
+    for span in footer_spans:
         if span.get('itemprop') is not None:
+            #if 'streetAddress' in span.get('itemprop'):
+            #    site_attrs.append({'street_address': span.text.strip('\n')})
             if 'addressLocality' in span['itemprop']:
                 site_attrs.append({'city': span.text})
             elif 'addressRegion' in span['itemprop']:
@@ -102,12 +110,16 @@ def get_site_instance(site_url):
                 site_attrs.append({'postal_code': span.text.strip()})
             elif 'telephone' in span['itemprop']:
                 site_attrs.append({'telephone': span.text.strip('\n')})
+    #print(site_attrs)
 
-    address = f"{site_attrs[0]['city']}, {site_attrs[1]['state']}"
-    zipcode = site_attrs[2]['postal_code']
-    phone = site_attrs[3]['telephone']
+    sitename = site_attrs[0]['name']
+    site_cat = site_attrs[1]['category']
+    site_address = f"{site_attrs[2]['city']}, {site_attrs[3]['state']}"
+    site_zipcode = site_attrs[4]['postal_code']
+    site_phone = site_attrs[5]['telephone']
 
-    return NationalSite(category, name, address, zipcode, phone)
+    return NationalSite(site_cat, sitename, site_address, site_zipcode, site_phone)
+
 
 
 def get_sites_for_state(state_url):
