@@ -143,6 +143,7 @@ def get_sites_for_state(state_url):
     state_sites_parent = state_home_bs.find('div', id='parkListResultsArea')
     state_site_lis = state_sites_parent.find_all('li')
 
+    site_instances = []
     for state_site_li in nat_site_lis:
         site_div = state_site_li.find('div', class_='col-md-9 col-sm-9 col-xs-12 table-cell list_left')
         if site_div is not NOne:
@@ -152,6 +153,9 @@ def get_sites_for_state(state_url):
                 site_details_url = BASE_URL + site_details_path + END_URL
                 site_instance = get_site_instance(site_details_url)
                 #print(site_instance.info())
+                if site_instance is not None:
+                    site_instances.append(site_instance)
+    return site_instances
 
 
 
