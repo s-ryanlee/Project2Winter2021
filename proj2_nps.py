@@ -12,6 +12,8 @@ BASE_URL = 'https://www.nps.gov'
 END_URL = 'index.htm'
 CACHE_FILE_NAME = 'cache.json'
 CACHE_DICT = {}
+headers = {'User-Agent': 'UMSI 507 Course Project - Python Web Scraping','From': 'sryanlee@umich.edu','Course-Info': 'https://www.si.umich.edu/programs/courses/507'}
+
 
 class NationalSite:
     '''a national site
@@ -60,8 +62,8 @@ def build_state_url_dict():
         e.g. {'michigan':'https://www.nps.gov/state/mi/index.htm', ...}
     '''
 
-    nat_parks_html = requests.get('https://www.nps.gov/index.htm')
-    soup = bs(nat_parks_html.content, 'html.parser')
+    nat_parks_html = make_url_request_using_cache('https://www.nps.gov/index.htm', CACHE_DICT)
+    soup = bs(nat_parks_html, 'html.parser')
 
     all_a = soup.find_all('a')
 
@@ -88,18 +90,18 @@ def get_site_instance(site_url):
     instance
         a national site instance
     '''
-    site_html = requests.get(site_url)
-    site_bs = bs(site_html.text, 'html.parser')
+    site_html = make_url_request_using_cache(site_url, CACHE_DICT)
+    site_bs = bs(site_html, 'html.parser')
 
-    site_attrs = []
+    site_attrs = {}
     title_parent = site_bs.find('div', class_='Hero-titleContainer clearfix')
 
     name_a = title_parent.find('a', class_='Hero-title')
     name = name_a.text.strip()
-    site_attrs.append({'name': name})
+    site_attrs['name'] = name
 
     category = title_parent.find('span', class_='Hero-designation').text.strip()
-    site_attrs.append({'category': category})
+    site_attrs['category'] = category
 
     footer_parent = site_bs.find('div', class_='ParkFooter-contact')
     footer_spans = footer_parent.find_all('span')
@@ -109,20 +111,27 @@ def get_site_instance(site_url):
             #if 'streetAddress' in span.get('itemprop'):
             #    site_attrs.append({'street_address': span.text.strip('\n')})
             if 'addressLocality' in span['itemprop']:
-                site_attrs.append({'city': span.text})
+                site_attrs['city'] = span.text
             elif 'addressRegion' in span['itemprop']:
-                site_attrs.append({'state': span.text})
+                site_attrs['state'] = span.text
             elif 'postalCode' in span['itemprop']:
-                site_attrs.append({'postal_code': span.text.strip()})
+                site_attrs['postal_code'] = span.text.strip()
             elif 'telephone' in span['itemprop']:
-                site_attrs.append({'telephone': span.text.strip('\n')})
+                site_attrs['telephone'] = span.text.strip('\n')
     #print(site_attrs)
 
-    sitename = site_attrs[0]['name']
-    site_cat = site_attrs[1]['category']
-    site_address = f"{site_attrs[2]['city']}, {site_attrs[3]['state']}"
-    site_zipcode = site_attrs[4]['postal_code']
-    site_phone = site_attrs[5]['telephone']
+    sitename = site_attrs['name']
+    site_cat = site_attrs['category']
+    if 'city' and 'postal_code' in site_attrs.keys():
+        site_address = f"{site_attrs['city']}, {site_attrs['state']}"
+        site_zipcode = site_attrs['postal_code']
+    else:
+        site_address = 'UNAVAILABLE'
+        site_zipcode = ''
+    if 'telephone' in site_attrs.keys():
+        site_phone = site_attrs['telephone']
+    else:
+        site_phone = 'UNAVAILABLE'
 
     return NationalSite(site_cat, sitename, site_address, site_zipcode, site_phone)
 
@@ -141,8 +150,9 @@ def get_sites_for_state(state_url):
     list
         a list of national site instances
     '''
-    state_home_html = requests.get(state_url)
-    state_home_bs = bs(state_home_html.text, 'html.parser')
+    
+    state_home_html = make_url_request_using_cache(state_url, CACHE_DICT)
+    state_home_bs = bs(state_home_html, 'html.parser')
 
     state_sites_parent = state_home_bs.find('div', id='parkListResultsArea')
     state_site_lis = state_sites_parent.find_all('li')
@@ -180,7 +190,7 @@ def get_nearby_places(site_object):
 
 
 
-def print_state_sites(site_instances):
+def print_state_sites(state, site_instances):
     '''Prints numbered national site names, categories, and address details
 
     Parameters
@@ -192,6 +202,9 @@ def print_state_sites(site_instances):
     -------
     None
     '''
+    print('-------------------------------------------')
+    print(f'LIST OF NATIONAL SITES IN {state.upper()}')
+    print('-------------------------------------------')
     i = 1
     for instance in site_instances:
         string = f'[{i}] {instance.info()}\n'
@@ -261,7 +274,6 @@ def make_url_request_using_cache(url, cache):
         return cache[url]
     else:
         print("Fetching")
-        time.sleep(1)
         response = requests.get(url, headers=headers)
         cache[url] = response.text
         save_cache(cache)
@@ -287,4 +299,4 @@ if __name__ == "__main__":
 
     # get NationalSites and display
     state_sites = get_sites_for_state(state_url_dict[state_input])
-    print_state_sites(state_sites)
+    print_state_sites(state_input, state_sites)
