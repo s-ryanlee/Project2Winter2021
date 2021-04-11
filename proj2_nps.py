@@ -339,7 +339,44 @@ def make_url_request_using_cache(url, cache, params=None):
             save_cache(cache)
             return cache[response.url]
 
+def get_state_input(url_dict):
+    state_input = ''
+    while state_input not in url_dict.keys():
+        state_input = input('Please enter the name of a US state or "exit":\n')
+        if state_input.lower().strip() == 'exit':
+            print("closing")
+            break
+        elif state_input.lower().strip() in state_url_dict.keys():
+            state = state_input.lower().strip()
 
+            state_sites = get_sites_for_state(state_url_dict[state])
+            print_state_sites(state, state_sites)
+            perform_adv_search(state_sites, url_dict)
+        else:
+            print("[Error] invalid state name")
+    return state_input
+
+def perform_adv_search(state_sites=None, url_dict=None):
+    adv_search = '999999999'
+    range_ = range(len(state_sites))
+    while adv_search not in range_:
+        adv_search = input('For advanced search: select the number of a site. Otherwise enter "exit" or "back" \n')
+        if adv_search.lower().strip() == 'exit':
+            print("closing")
+            break
+        elif adv_search.lower().strip() == 'back':
+            #print(f"previous entry: {state_input}")
+            new_state_input = get_state_input(url_dict)
+            if new_state_input.lower().strip == 'exit':
+                print("closing")
+                break
+        elif int(adv_search) in range_:
+            choice_num = int(adv_search) - 1
+            places = get_nearby_places(state_sites[choice_num])
+            print_nearby_places(places, state_sites[choice_num])
+            continue
+        else:
+            print("[Error] invalid selection")
 
 if __name__ == "__main__":
 
@@ -350,34 +387,40 @@ if __name__ == "__main__":
     state_url_dict = build_state_url_dict()
     #print(state_url_dict['michigan'])
 
+    get_state_input(state_url_dict)
+
     # get user input, normalize, and validate
-    state_input = ''
-    while state_input not in state_url_dict.keys():
-        state_input = input('Please enter the name of a US state or "exit":\n')
-        if state_input.lower().strip() == 'exit':
-            print("closing")
-            break
-        elif state_input.lower().strip() in state_url_dict.keys():
-            state = state_input.lower().strip()
+    # state_input = ''
+    # while state_input not in state_url_dict.keys():
+    #     state_input = input('Please enter the name of a US state or "exit":\n')
+    #     if state_input.lower().strip() == 'exit':
+    #         print("closing")
+    #         break
+    #     elif state_input.lower().strip() in state_url_dict.keys():
+    #         state = state_input.lower().strip()
 
-            state_sites = get_sites_for_state(state_url_dict[state])
-            print_state_sites(state, state_sites)
+    #         state_sites = get_sites_for_state(state_url_dict[state])
+    #         print_state_sites(state, state_sites)
 
-            adv_search = input('For advanced search: select the number of a site. Otherwise enter "exit" or "back" \n')
-            if adv_search.lower().strip() == 'exit':
-                print("closing")
-                pass
-            elif adv_search.lower().strip() == 'back':
-                print(f"previous entry: {state_input}")
-                continue
-            elif int(adv_search) in range(len(state_sites)):
-                choice_num = int(adv_search) - 1
-                places = get_nearby_places(state_sites[choice_num])
-                print_nearby_places(places, state_sites[choice_num])
-            else:
-                print("[Error] invalid selection")
-        else:
-            print("[Error] invalid state name")
+    #         adv_search = '9999999'
+    #         while int(adv_search) not in range(len(state_sites)):
+    #             adv_search = input('For advanced search: select the number of a site. Otherwise enter "exit" or "back" \n')
+    #             if adv_search.lower().strip() == 'exit':
+    #                 print("closing")
+    #                 pass
+    #             elif adv_search.lower().strip() == 'back':
+    #                 print(f"previous entry: {state_input}")
+    #                 #break
+    #                 continue
+    #             elif int(adv_search) in range(len(state_sites)):
+    #                 choice_num = int(adv_search) - 1
+    #                 places = get_nearby_places(state_sites[choice_num])
+    #                 print_nearby_places(places, state_sites[choice_num])
+    #                 continue
+    #             else:
+    #                 print("[Error] invalid selection")
+    #     else:
+    #         print("[Error] invalid state name")
 
 
 
