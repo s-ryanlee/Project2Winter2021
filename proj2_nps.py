@@ -13,6 +13,7 @@ END_URL = 'index.htm'
 CACHE_FILE_NAME = 'cache.json'
 CACHE_DICT = {}
 headers = {'User-Agent': 'UMSI 507 Course Project - Python Web Scraping','From': 'sryanlee@umich.edu','Course-Info': 'https://www.si.umich.edu/programs/courses/507'}
+API_KEY = secrets.API_KEY
 
 
 class NationalSite:
@@ -186,8 +187,35 @@ def get_nearby_places(site_object):
     dict
         a converted API return from MapQuest API
     '''
-    pass
+    resource_url = 'http://www.mapquestapi.com/search/v2/radius'
+    params = {
+        'origin': site_object.address,
+        'radius': 10,
+        'maxMatches': 10,
+        'ambiguities': 'ignore',
+        'outFormat': 'json',
+        'key': API_KEY
+    }
 
+    response = make_url_request_using_cache(resource_url, CACHE_DICT, params=params)
+    #print(response)
+    search_results = json.loads(response)['searchResults']
+
+    results_dict = {}
+
+    for result in search_results:
+        result_info = {}
+        result_info['category'] = result['fields']['group_sic_code_name_ext']
+        result_info['address'] = result['fields']['address']
+        result_info['city'] = result['fields']['city']
+
+        for k,v in result_info.items():
+            if k != 'name':
+                if v is None:
+                    result_info[k] == f'no {k}'
+        results_dict[result['name']] = result_info
+    #print(results_dict)
+    return results_dict
 
 
 def print_state_sites(state, site_instances):
@@ -210,6 +238,28 @@ def print_state_sites(state, site_instances):
         string = f'[{i}] {instance.info()}\n'
         print(string)
         i += 1
+
+
+def print_nearby_places(nearby_places_dict, site_instance):
+    '''Prints formatted name, category, address, and city of MapQuest API search results.
+
+    Parameters
+    ----------
+    search_results: dictionary
+        dictionary containing dictionaries of places nearby a national site
+    site_instance: object
+        NationalSite instance
+
+    Returns
+    -------
+    None
+    '''
+
+    print('---------------------------------------------------------')
+    print(f'PLACES NEARBY {site_instance.name.upper()} NATIONAL SITE')
+    print('---------------------------------------------------------')
+    for k,v in nearby_places_dict.items():
+        print(f"- {k} ({v['category']}): {v['address']}, {v['city']}")
 
 
 def load_cache():
@@ -253,7 +303,7 @@ def save_cache(cache):
     cache_file.close()
 
 
-def make_url_request_using_cache(url, cache):
+def make_url_request_using_cache(url, cache, params=None):
     '''Makes a request to data saved in the local cache or directly from the webpage,
     depending on if url already exists within the cache.
 
@@ -273,11 +323,18 @@ def make_url_request_using_cache(url, cache):
         print("Using cache")
         return cache[url]
     else:
-        print("Fetching")
-        response = requests.get(url, headers=headers)
-        cache[url] = response.text
-        save_cache(cache)
-        return cache[url]
+        if params is not None:
+            print("Fetching")
+            response = requests.get(url, params=params, headers=headers)
+            cache[url] = response.text
+            save_cache(cache)
+            return cache[url]
+        else:
+            print("Fetching")
+            response = requests.get(url, headers=headers)
+            cache[url] = response.text
+            save_cache(cache)
+            return cache[url]
 
 
 
@@ -300,3 +357,8 @@ if __name__ == "__main__":
     # get NationalSites and display
     state_sites = get_sites_for_state(state_url_dict[state_input])
     print_state_sites(state_input, state_sites)
+
+    # test nearby places
+    nearby_places = get_nearby_places(state_sites[-2])
+    print_nearby_places(nearby_places, state_sites[-2])
+
