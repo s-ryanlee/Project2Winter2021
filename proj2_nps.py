@@ -339,36 +339,61 @@ def make_url_request_using_cache(url, cache, params=None):
             save_cache(cache)
             return cache[response.url]
 
-def get_state_input(url_dict):
-    state_input = ''
-    while state_input not in url_dict.keys():
-        state_input = input('Please enter the name of a US state or "exit":\n')
-        if state_input.lower().strip() == 'exit':
-            print("closing")
+def get_user_input(url_dict):
+    '''Starts interactive user search interface
+
+    Parameters
+    ----------
+    url_dict : dictionary
+        dictionary containing states and corrsponding nps.gov urls
+
+    Returns
+    -------
+    user input
+    '''
+    user_input = ''
+    while user_input not in url_dict.keys():
+        user_input = input('Please enter the name of a US state or "exit":\n')
+        if user_input.lower().strip() == 'exit':
+            print("closing state search")
             break
-        elif state_input.lower().strip() in state_url_dict.keys():
-            state = state_input.lower().strip()
+        elif user_input.lower().strip() in state_url_dict.keys():
+            state = user_input.lower().strip()
 
             state_sites = get_sites_for_state(state_url_dict[state])
             print_state_sites(state, state_sites)
             perform_adv_search(state_sites, url_dict)
         else:
             print("[Error] invalid state name")
-    return state_input
+    return user_input
+
 
 def perform_adv_search(state_sites=None, url_dict=None):
+    '''Searches for places near a specified national site using MapQuest API
+
+    Parameters
+    ----------
+    state_sites (Optional) : list
+        list of NationalSite instances
+    url_dict (Optional): dictionary
+        dictionary containing states and corrsponding nps.gov urls
+
+    Returns
+    -------
+    None
+    '''
     adv_search = '999999999'
     range_ = range(len(state_sites))
     while adv_search not in range_:
         adv_search = input('For advanced search: select the number of a site. Otherwise enter "exit" or "back" \n')
         if adv_search.lower().strip() == 'exit':
-            print("closing")
-            break
+            print("closing advanced search")
+            new_state_input = get_user_input(url_dict)
         elif adv_search.lower().strip() == 'back':
             #print(f"previous entry: {state_input}")
-            new_state_input = get_state_input(url_dict)
-            if new_state_input.lower().strip == 'exit':
-                print("closing")
+            new_state_input = get_user_input(url_dict)
+            if new_state_input.lower().strip() == 'exit':
+                print("closing advanced search")
                 break
         elif int(adv_search) in range_:
             choice_num = int(adv_search) - 1
@@ -380,48 +405,8 @@ def perform_adv_search(state_sites=None, url_dict=None):
 
 if __name__ == "__main__":
 
-    # Load the cache, save in global variable
     CACHE_DICT = load_cache()
 
-    # build url dict
     state_url_dict = build_state_url_dict()
-    #print(state_url_dict['michigan'])
 
-    get_state_input(state_url_dict)
-
-    # get user input, normalize, and validate
-    # state_input = ''
-    # while state_input not in state_url_dict.keys():
-    #     state_input = input('Please enter the name of a US state or "exit":\n')
-    #     if state_input.lower().strip() == 'exit':
-    #         print("closing")
-    #         break
-    #     elif state_input.lower().strip() in state_url_dict.keys():
-    #         state = state_input.lower().strip()
-
-    #         state_sites = get_sites_for_state(state_url_dict[state])
-    #         print_state_sites(state, state_sites)
-
-    #         adv_search = '9999999'
-    #         while int(adv_search) not in range(len(state_sites)):
-    #             adv_search = input('For advanced search: select the number of a site. Otherwise enter "exit" or "back" \n')
-    #             if adv_search.lower().strip() == 'exit':
-    #                 print("closing")
-    #                 pass
-    #             elif adv_search.lower().strip() == 'back':
-    #                 print(f"previous entry: {state_input}")
-    #                 #break
-    #                 continue
-    #             elif int(adv_search) in range(len(state_sites)):
-    #                 choice_num = int(adv_search) - 1
-    #                 places = get_nearby_places(state_sites[choice_num])
-    #                 print_nearby_places(places, state_sites[choice_num])
-    #                 continue
-    #             else:
-    #                 print("[Error] invalid selection")
-    #     else:
-    #         print("[Error] invalid state name")
-
-
-
-
+    get_user_input(state_url_dict)
