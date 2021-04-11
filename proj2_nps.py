@@ -205,6 +205,8 @@ def get_nearby_places(site_object):
 
     for result in search_results:
         result_info = {}
+        result_info['resultCount'] = result['resultNumber']
+        result_info['name'] = result['name']
         result_info['category'] = result['fields']['group_sic_code_name_ext']
         result_info['address'] = result['fields']['address']
         result_info['city'] = result['fields']['city']
