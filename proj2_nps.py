@@ -196,8 +196,9 @@ def get_nearby_places(site_object):
         'outFormat': 'json',
         'key': API_KEY
     }
-
-    response = make_url_request_using_cache(resource_url, CACHE_DICT, params=params)
+    response_url = requests.get(resource_url, params=params).url
+    #print(response_url)
+    response = make_url_request_using_cache(response_url, CACHE_DICT)
     #print(response)
     search_results = json.loads(response)['searchResults']
 
@@ -328,15 +329,15 @@ def make_url_request_using_cache(url, cache, params=None):
         if params is not None:
             print("Fetching")
             response = requests.get(url, params=params, headers=headers)
-            cache[url] = response.text
+            cache[response.url] = response.text
             save_cache(cache)
-            return cache[url]
+            return cache[response.url]
         else:
             print("Fetching")
             response = requests.get(url, headers=headers)
-            cache[url] = response.text
+            cache[response.url] = response.text
             save_cache(cache)
-            return cache[url]
+            return cache[response.url]
 
 
 
@@ -352,15 +353,32 @@ if __name__ == "__main__":
     # get user input, normalize, and validate
     state_input = ''
     while state_input not in state_url_dict.keys():
-        state_input = input('Please input the name of a US state:\n')
-        state_input = state_input.lower().strip()
-        #print(state_input)
+        state_input = input('Please enter the name of a US state or "exit":\n')
+        if state_input.lower().strip() == 'exit':
+            print("closing")
+            break
+        elif state_input.lower().strip() in state_url_dict.keys():
+            state = state_input.lower().strip()
 
-    # get NationalSites and display
-    state_sites = get_sites_for_state(state_url_dict[state_input])
-    print_state_sites(state_input, state_sites)
+            state_sites = get_sites_for_state(state_url_dict[state])
+            print_state_sites(state, state_sites)
 
-    # test nearby places
-    nearby_places = get_nearby_places(state_sites[-2])
-    print_nearby_places(nearby_places, state_sites[-2])
+            adv_search = input('For advanced search: select the number of a site. Otherwise enter "exit" or "back" \n')
+            if adv_search.lower().strip() == 'exit':
+                print("closing")
+                pass
+            elif adv_search.lower().strip() == 'back':
+                print(f"previous entry: {state_input}")
+                continue
+            elif int(adv_search) in range(len(state_sites)):
+                choice_num = int(adv_search) - 1
+                places = get_nearby_places(state_sites[choice_num])
+                print_nearby_places(places, state_sites[choice_num])
+            else:
+                print("[Error] invalid selection")
+        else:
+            print("[Error] invalid state name")
+
+
+
 
